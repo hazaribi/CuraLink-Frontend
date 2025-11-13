@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test AI Assistant</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-md mx-auto bg-white rounded-lg p-6">
+        <h2 class="text-xl font-bold mb-4">Test AI Assistant</h2>
+        
+        <div class="mb-4">
+            <label class="block mb-2">User Type:</label>
+            <select id="userType" class="w-full p-2 border rounded">
+                <option value="patient">Patient</option>
+                <option value="researcher">Researcher</option>
+            </select>
+        </div>
+        
+        <div class="mb-4">
+            <label class="block mb-2">Message:</label>
+            <input type="text" id="message" placeholder="Ask something..." class="w-full p-2 border rounded">
+        </div>
+        
+        <button onclick="testAI()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+            Test AI
+        </button>
+        
+        <div id="result" class="mt-4 p-4 bg-gray-50 rounded hidden">
+            <h3 class="font-bold">AI Response:</h3>
+            <div id="response"></div>
+        </div>
+    </div>
+
+    <script>
+        async function testAI() {
+            const userType = document.getElementById('userType').value;
+            const message = document.getElementById('message').value;
+            const resultDiv = document.getElementById('result');
+            const responseDiv = document.getElementById('response');
+            
+            if (!message.trim()) {
+                alert('Please enter a message');
+                return;
+            }
+            
+            try {
+                let response;
+                
+                if (userType === 'patient') {
+                    response = await fetch('https://curalink-backend-42qr.onrender.com/api/ai/analyze-condition', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ text: message, analysis_type: 'condition' })
+                    });
+                } else {
+                    response = await fetch('https://curalink-backend-42qr.onrender.com/api/ai/research-suggestions', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ 
+                            specialties: ['Research'], 
+                            research_interests: ['General'], 
+                            question: message 
+                        })
+                    });
+                }
+                
+                const data = await response.json();
+                console.log('API Response:', data);
+                
+                let displayText = '';
+                if (userType === 'patient' && data.success && data.data) {
+                    displayText = data.data.primaryCondition;
+                } else if (userType === 'researcher' && data.success && data.suggestions) {
+                    displayText = data.suggestions.join('\n\n');
+                } else {
+                    displayText = JSON.stringify(data, null, 2);
+                }
+                
+                responseDiv.textContent = displayText;
+                resultDiv.classList.remove('hidden');
+                
+            } catch (error) {
+                console.error('Error:', error);
+                responseDiv.textContent = 'Error: ' + error.message;
+                resultDiv.classList.remove('hidden');
+            }
+        }
+        
+        // Allow Enter key to submit
+        document.getElementById('message').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                testAI();
+            }
+        });
+    </script>
+</body>
+</html>
