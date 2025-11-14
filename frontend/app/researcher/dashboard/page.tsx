@@ -272,7 +272,7 @@ export default function ResearcherDashboard() {
   const handleConnectionRequest = (collaboratorId: number, action: 'accept' | 'decline') => {
     setConnectionRequests(prev => prev.filter(req => req.id !== collaboratorId));
     if (action === 'accept') {
-      const newConnection = mockData.collaborators.find(c => c.id === collaboratorId);
+      const newConnection = realCollaborators.find(c => c.id === collaboratorId);
       if (newConnection) {
         setConnections(prev => [...prev, { ...newConnection, status: 'online', lastSeen: 'now' }]);
       }
