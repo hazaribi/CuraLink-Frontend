@@ -233,6 +233,17 @@ export default function ResearcherDashboard() {
     }
   }, [activeTab, orcidPublications]);
 
+  // Filter recent publications (past 6 months)
+  const getRecentPublications = (publications: any[]) => {
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+    
+    return publications.filter(pub => {
+      const pubDate = new Date(pub.date);
+      return pubDate >= sixMonthsAgo;
+    });
+  };
+
   // Auto-search publications when search term changes
   useEffect(() => {
     const timeoutId = setTimeout(() => {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { apiService } from '../../../../lib/api';
 import MeetingRequestModal from './MeetingRequestModal';
 import ResearcherProfileModal from './ResearcherProfileModal';
@@ -33,6 +33,7 @@ export default function HealthExpertsTab({ profile }: { profile: PatientProfile 
   const [filterCountry, setFilterCountry] = useState('');
   const [showAllLocations, setShowAllLocations] = useState(false);
   const [includeExternal, setIncludeExternal] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (profile?.condition) {
@@ -69,7 +70,7 @@ export default function HealthExpertsTab({ profile }: { profile: PatientProfile 
         setLoading(true);
         loadExperts();
       }
-    }, 300);
+    }, 800);
     return () => clearTimeout(timeoutId);
   }, [searchTerm]);
 
@@ -277,11 +278,13 @@ export default function HealthExpertsTab({ profile }: { profile: PatientProfile 
             </div>
           </div>
           <input
+            ref={searchInputRef}
             type="text"
             placeholder={`Search (auto-includes ${profile.condition}): e.g., "deep brain stimulation", "immunotherapy", "diet"`}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full sm:w-80 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-gray-900 placeholder-gray-500"
+            autoComplete="off"
           />
         </div>
         
@@ -430,6 +433,9 @@ export default function HealthExpertsTab({ profile }: { profile: PatientProfile 
                   onClick={async () => {
                     try {
                       const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+                      if (!API_URL.startsWith('http://localhost') && !API_URL.startsWith('https://')) {
+                        throw new Error('Invalid API URL');
+                      }
                       await fetch(`${API_URL}/api/admin/flag-missing-contact`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },

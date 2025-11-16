@@ -29,8 +29,9 @@ export default function ResearcherOnboarding() {
     'Biomarkers', 'Precision Medicine', 'Clinical Trials', 'Diagnostics',
     'Parkinson\'s Disease', 'Deep Brain Stimulation', 'Movement Disorders', 'Neurodegeneration',
     'Stem Cell Therapy', 'Proteomics', 'Recurrent Glioma', 'Mass Spectrometry',
-    'ADHD', 'Neurofeedback Training', 'Neuroimaging', 'Brain Development',
-    'Depression', 'Brain Stimulation', 'Cognitive Therapy', 'Long-term Outcomes'
+    'Attention-Deficit/Hyperactivity Disorder (ADHD)', 'ADHD', 'Neurofeedback Training', 'Neuroimaging', 'Brain Development',
+    'Depression', 'Brain Stimulation', 'Cognitive Therapy', 'Long-term Outcomes',
+    'Pediatric Neurology', 'Epilepsy Surgery', 'Breast Cancer', 'Ductal Carcinoma in Situ'
   ];
 
   const handleBasicInfoSubmit = (e: React.FormEvent) => {

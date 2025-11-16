@@ -5,7 +5,7 @@
 ### 1. backend/.env
 ```
 # Fix the API key (remove space before =)
-GOOGLE_AI_API_KEY=AIzaSyBBOW3r7zb94GASFQQVYXLkjWO3pvlEPCM
+GOOGLE_AI_API_KEY=your_actual_api_key_here
 ```
 
 ### 2. backend/ai_service.py
@@ -46,7 +46,7 @@ from ai_service import ai_service
 
 ## Environment Variables on Render:
 Make sure these are set in your Render dashboard:
-- `GOOGLE_AI_API_KEY=AIzaSyBBOW3r7zb94GASFQQVYXLkjWO3pvlEPCM`
+- `GOOGLE_AI_API_KEY=your_actual_api_key_here`
 - All other existing environment variables
 
 ## Test After Deployment:

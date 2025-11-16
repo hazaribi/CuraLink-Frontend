@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { apiService } from '../../../../lib/api';
 
 interface PatientProfile {
@@ -26,6 +26,7 @@ export default function ClinicalTrialsTab({ profile }: { profile: PatientProfile
   const [statusFilter, setStatusFilter] = useState('');
   const [locationFilter, setLocationFilter] = useState('');
   const [showAISummary, setShowAISummary] = useState<{[key: number]: boolean}>({});
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (profile?.condition) {
@@ -70,7 +71,7 @@ export default function ClinicalTrialsTab({ profile }: { profile: PatientProfile
       if (searchTerm.length > 2) {
         searchTrials();
       }
-    }, 500);
+    }, 800);
     return () => clearTimeout(timeoutId);
   }, [searchTerm]);
 
@@ -457,11 +458,13 @@ ${body}`;
           </div>
           <div className="relative w-full sm:w-80">
             <input
+              ref={searchInputRef}
               type="text"
               placeholder={`Search (auto-includes ${profile.condition}): e.g., "multiple system atrophy", "immunotherapy", "vaccine"`}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-gray-900 placeholder-gray-500"
+              autoComplete="off"
             />
             {searchTerm.length > 0 && (
               <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-40 overflow-y-auto">
