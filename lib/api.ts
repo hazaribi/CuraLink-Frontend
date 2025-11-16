@@ -67,8 +67,8 @@ class ApiService {
 
       return response.json();
     } catch (error) {
-      console.error(`API request failed for ${endpoint}:`, error.message);
-      throw new Error(`API request failed: ${error.message}`);
+      console.error(`API request failed for ${endpoint}:`, error instanceof Error ? error.message : 'Unknown error');
+      throw new Error(`API request failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
