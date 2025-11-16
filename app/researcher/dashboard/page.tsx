@@ -233,6 +233,17 @@ export default function ResearcherDashboard() {
     }
   }, [activeTab, orcidPublications]);
 
+  // Filter recent publications (past 6 months)
+  const getRecentPublications = (publications: any[]) => {
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+    
+    return publications.filter(pub => {
+      const pubDate = new Date(pub.date);
+      return pubDate >= sixMonthsAgo;
+    });
+  };
+
   // Auto-search publications when search term changes
   useEffect(() => {
     const timeoutId = setTimeout(() => {
@@ -272,7 +283,7 @@ export default function ResearcherDashboard() {
   const handleConnectionRequest = (collaboratorId: number, action: 'accept' | 'decline') => {
     setConnectionRequests(prev => prev.filter(req => req.id !== collaboratorId));
     if (action === 'accept') {
-      const newConnection = mockData.collaborators.find(c => c.id === collaboratorId);
+      const newConnection = realCollaborators.find(c => c.id === collaboratorId);
       if (newConnection) {
         setConnections(prev => [...prev, { ...newConnection, status: 'online', lastSeen: 'now' }]);
       }

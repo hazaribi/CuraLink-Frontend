@@ -42,7 +42,7 @@ export default function PublicationsTab({ profile }: { profile: PatientProfile }
       const response = await apiService.getPublications(keyword, journalFilter);
       setPublications(response.publications || []);
     } catch (error) {
-      console.warn('Publications API unavailable, using fallback data');
+      console.error('Publications API error:', error instanceof Error ? error.message : 'Unknown error');
       setPublications([]);
     } finally {
       setLoading(false);

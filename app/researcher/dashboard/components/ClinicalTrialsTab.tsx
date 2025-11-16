@@ -31,7 +31,7 @@ export default function ClinicalTrialsTab({ onSaveTrial, isFavorited, onRemoveTr
   useEffect(() => {
     const loadTrials = async () => {
       try {
-        const { apiService } = await import('../../../lib/api');
+        const { apiService } = await import('@/lib/api');
         const response = await apiService.getClinicalTrials();
         const apiTrialsData = response.trials || [];
         

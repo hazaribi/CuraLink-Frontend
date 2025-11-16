@@ -430,6 +430,9 @@ export default function HealthExpertsTab({ profile }: { profile: PatientProfile 
                   onClick={async () => {
                     try {
                       const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+                      if (!API_URL.startsWith('http://localhost') && !API_URL.startsWith('https://')) {
+                        throw new Error('Invalid API URL');
+                      }
                       await fetch(`${API_URL}/api/admin/flag-missing-contact`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
