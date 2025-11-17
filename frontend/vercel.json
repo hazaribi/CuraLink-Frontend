@@ -1,10 +1,4 @@
 {
-<<<<<<< HEAD
-=======
-  "buildCommand": "cd frontend && npm run build",
-  "outputDirectory": "frontend/.next",
-  "installCommand": "cd frontend && npm install",
->>>>>>> bf8636ddf8ae1d0954b99c3a1cfb09e0a2efba9c
   "framework": "nextjs",
   "headers": [
     {
