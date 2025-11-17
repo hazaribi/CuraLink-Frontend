@@ -38,15 +38,15 @@ export default function ClinicalTrialsTab({ onSaveTrial, isFavorited, onRemoveTr
         if (savedProfile) {
           const profile = JSON.parse(savedProfile);
           if (profile.specialties?.some((s: string) => s.toLowerCase().includes('movement disorders'))) {
-            searchQuery = 'movement disorders Parkinson\'s disease';
+            searchQuery = 'freezing gait Parkinson\'s disease';
           } else if (profile.specialties?.some((s: string) => s.toLowerCase().includes('neurology'))) {
             searchQuery = 'neurology pediatric';
           } else if (profile.specialties?.some((s: string) => s.toLowerCase().includes('proteomics') || s.toLowerCase().includes('glioma'))) {
             searchQuery = 'glioma bevacizumab radiotherapy';
-          } else if (profile.specialties?.some((s: string) => s.toLowerCase().includes('adhd') || s.toLowerCase().includes('attention'))) {
-            searchQuery = 'ADHD dopamine modulation Amsterdam';
-          } else if (profile.specialties?.some((s: string) => s.toLowerCase().includes('depression') || s.toLowerCase().includes('depressive'))) {
-            searchQuery = 'psilocybin depression Amsterdam';
+          } else if (profile.specialties?.some((s: string) => s.toLowerCase().includes('adhd') || s.toLowerCase().includes('attention')) || profile.name?.toLowerCase().includes('buitelaar')) {
+            searchQuery = 'ADHD medication response Amsterdam neurofeedback';
+          } else if (profile.specialties?.some((s: string) => s.toLowerCase().includes('depression') || s.toLowerCase().includes('depressive')) || profile.name?.toLowerCase().includes('penninx')) {
+            searchQuery = 'psilocybin depression Amsterdam ketamine';
           }
         }
         

@@ -286,20 +286,23 @@ class ApiService {
         (searchLower.includes('system atrophy') && trial.title.toLowerCase().includes('system atrophy')) ||
         (searchLower.includes('breast cancer') && (trial.title.toLowerCase().includes('breast') || trial.title.toLowerCase().includes('ductal'))) ||
         (searchLower.includes('ductal carcinoma') && trial.title.toLowerCase().includes('ductal carcinoma')) ||
-        (searchLower.includes('adhd') && trial.title.toLowerCase().includes('adhd')) ||
-        (searchLower.includes('neurofeedback') && trial.title.toLowerCase().includes('neurofeedback')) ||
-        (searchLower.includes('depression') && trial.title.toLowerCase().includes('depression')) ||
-        (searchLower.includes('ketamine') && trial.title.toLowerCase().includes('ketamine')) ||
+        (searchLower.includes('adhd') && (trial.title.toLowerCase().includes('adhd') || trial.description?.toLowerCase().includes('adhd'))) ||
+        (searchLower.includes('neurofeedback') && (trial.title.toLowerCase().includes('neurofeedback') || trial.description?.toLowerCase().includes('neurofeedback'))) ||
+        (searchLower.includes('depression') && (trial.title.toLowerCase().includes('depression') || trial.description?.toLowerCase().includes('depression'))) ||
+        (searchLower.includes('ketamine') && (trial.title.toLowerCase().includes('ketamine') || trial.description?.toLowerCase().includes('ketamine'))) ||
         (searchLower.includes('brain stimulation') && (trial.title.toLowerCase().includes('brain stimulation') || trial.title.toLowerCase().includes('tms') || trial.title.toLowerCase().includes('deep brain'))) ||
-        (searchLower.includes('glioma') && trial.title.toLowerCase().includes('glioma')) ||
-        (searchLower.includes('bevacizumab') && trial.title.toLowerCase().includes('bevacizumab')) ||
-        (searchLower.includes('radiotherapy') && trial.title.toLowerCase().includes('radiotherapy')) ||
+        (searchLower.includes('glioma') && (trial.title.toLowerCase().includes('glioma') || trial.description?.toLowerCase().includes('glioma'))) ||
+        (searchLower.includes('bevacizumab') && (trial.title.toLowerCase().includes('bevacizumab') || trial.description?.toLowerCase().includes('bevacizumab'))) ||
+        (searchLower.includes('radiotherapy') && (trial.title.toLowerCase().includes('radiotherapy') || trial.description?.toLowerCase().includes('radiotherapy'))) ||
         (searchLower.includes('dopamine') && (trial.title.toLowerCase().includes('dopamine') || trial.description?.toLowerCase().includes('dopamine'))) ||
         (searchLower.includes('psilocybin') && (trial.title.toLowerCase().includes('psilocybin') || trial.description?.toLowerCase().includes('psilocybin'))) ||
-        (searchLower.includes('freezing') && trial.title.toLowerCase().includes('freezing')) ||
-        (searchLower.includes('gait') && trial.title.toLowerCase().includes('gait')) ||
-        (searchLower.includes('medication response') && trial.title.toLowerCase().includes('medication response')) ||
-        (searchLower.includes('amsterdam') && trial.location.toLowerCase().includes('amsterdam'));
+        (searchLower.includes('freezing') && (trial.title.toLowerCase().includes('freezing') || trial.description?.toLowerCase().includes('freezing'))) ||
+        (searchLower.includes('gait') && (trial.title.toLowerCase().includes('gait') || trial.description?.toLowerCase().includes('gait'))) ||
+        (searchLower.includes('medication response') && (trial.title.toLowerCase().includes('medication response') || trial.description?.toLowerCase().includes('medication response'))) ||
+        (searchLower.includes('amsterdam') && trial.location.toLowerCase().includes('amsterdam')) ||
+        // Enhanced matching for specific researcher queries
+        (searchLower.includes('adhd medication response amsterdam') && trial.location.toLowerCase().includes('amsterdam') && (trial.title.toLowerCase().includes('adhd') || trial.description?.toLowerCase().includes('adhd'))) ||
+        (searchLower.includes('psilocybin depression amsterdam') && trial.location.toLowerCase().includes('amsterdam') && (trial.title.toLowerCase().includes('psilocybin') || trial.title.toLowerCase().includes('depression')));
       
       const matchesLocation = true; // Simplified for now
       

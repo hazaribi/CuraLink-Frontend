@@ -221,91 +221,48 @@ export default function ResearcherDashboard() {
           searchQuery = 'neuroimaging';
         } else if (profile.specialties.some(s => s.toLowerCase().includes('depression') || s.toLowerCase().includes('depressive')) || profile.name.toLowerCase().includes('penninx')) {
           searchQuery = 'neuroimaging';
-        } else if (profile.specialties.some(s => s.toLowerCase().includes('depression') || s.toLowerCase().includes('depressive'))) {
-          // Return specific depression collaborators
-          const depressionCollaborators = [
-            {
-              id: 'dep1',
-              name: 'Dr. Guido van Wingen',
-              specialty: 'Neuroimaging',
-              institution: 'Amsterdam UMC',
-              publications: 85,
-              researchInterests: ['Neuroimaging', 'Depression', 'Brain Networks'],
-              collaborationStatus: 'open',
-              matchScore: 95
-            },
-            {
-              id: 'dep2', 
-              name: 'Prof. Claudi Bockting',
-              specialty: 'Depression Treatment',
-              institution: 'University of Amsterdam',
-              publications: 120,
-              researchInterests: ['Depression Treatment', 'Cognitive Therapy', 'Relapse Prevention'],
-              collaborationStatus: 'open',
-              matchScore: 92
-            },
-            {
-              id: 'dep3',
-              name: 'Dr. Nic van der Wee', 
-              specialty: 'Psychiatry',
-              institution: 'Leiden University Medical Center',
-              publications: 95,
-              researchInterests: ['Depression', 'Neuroimaging', 'Anxiety Disorders'],
-              collaborationStatus: 'selective',
-              matchScore: 90
-            },
-            {
-              id: 'dep4',
-              name: 'Prof. Damiaan Denys',
-              specialty: 'Neurology', 
-              institution: 'Amsterdam UMC',
-              publications: 110,
-              researchInterests: ['Depression', 'Deep Brain Stimulation', 'Treatment-Resistant Depression'],
-              collaborationStatus: 'selective',
-              matchScore: 88
-            }
-          ];
-          setRealCollaborators(depressionCollaborators);
-          setLoadingCollaborators(false);
-          return;
         } else {
           searchQuery = profile.specialties[0] || '';
         }
       }
-      const response = await apiService.getCollaborators(selectedSpecialtyFilter, searchQuery, profile?.location);
-      const apiCollaborators = (response as any).collaborators || [];
       
-      // Use API data directly (already filtered)
-      const filtered = apiCollaborators;
+      // Always try to get collaborators - use fallback if API fails
+      let collaborators = [];
+      try {
+        const response = await apiService.getCollaborators(selectedSpecialtyFilter, searchQuery, profile?.location);
+        collaborators = (response as any).collaborators || [];
+      } catch (apiError) {
+        console.warn('API failed, using mock data');
+        collaborators = apiService.getMockCollaborators(selectedSpecialtyFilter, searchQuery, profile?.location);
+      }
+      
+      // If no collaborators found, get default set based on researcher type
+      if (collaborators.length === 0) {
+        if (profile?.specialties.some(s => s.toLowerCase().includes('movement disorders'))) {
+          collaborators = apiService.getMockCollaborators('', 'pediatric neurology', 'Toronto');
+        } else if (profile?.specialties.some(s => s.toLowerCase().includes('proteomics') || s.toLowerCase().includes('glioma'))) {
+          collaborators = apiService.getMockCollaborators('', 'proteomics', '');
+        } else if (profile?.specialties.some(s => s.toLowerCase().includes('adhd') || s.toLowerCase().includes('attention'))) {
+          collaborators = apiService.getMockCollaborators('', 'neuroimaging', 'Amsterdam');
+        } else if (profile?.specialties.some(s => s.toLowerCase().includes('depression') || s.toLowerCase().includes('depressive'))) {
+          collaborators = apiService.getMockCollaborators('', 'neuroimaging', 'Amsterdam');
+        } else {
+          // Get a general set of collaborators
+          collaborators = apiService.getMockCollaborators('', '', '');
+        }
+      }
       
       // Calculate match scores and sort
-      const scoredCollaborators = filtered.map((collab: Collaborator) => ({
+      const scoredCollaborators = collaborators.map((collab: Collaborator) => ({
         ...collab,
         matchScore: calculateCollaboratorMatch(collab)
       })).sort((a: Collaborator, b: Collaborator) => (b.matchScore || 0) - (a.matchScore || 0));
       
       setRealCollaborators(scoredCollaborators);
     } catch (error) {
-      console.warn('Collaborators API unavailable, using fallback data');
-      // Force API mock data directly
-      const { apiService } = await import('../../../lib/api');
-      // Enhanced fallback search
-      let searchQuery = collaboratorSearch;
-      if (!searchQuery && profile?.specialties) {
-        if (profile.specialties.some(s => s.toLowerCase().includes('movement disorders'))) {
-          searchQuery = 'movement disorders neurology';
-        } else if (profile.specialties.some(s => s.toLowerCase().includes('proteomics') || s.toLowerCase().includes('glioma'))) {
-          searchQuery = 'proteomics glioma cancer research';
-        } else {
-          searchQuery = profile.specialties[0] || '';
-        }
-      }
-      const fallbackData = (apiService as any).getMockCollaborators?.(selectedSpecialtyFilter, searchQuery, profile?.location) || [];
-      const filtered = fallbackData.map((collab: Collaborator) => ({
-        ...collab,
-        matchScore: calculateCollaboratorMatch(collab)
-      })).sort((a: Collaborator, b: Collaborator) => (b.matchScore || 0) - (a.matchScore || 0));
-      setRealCollaborators(filtered);
+      console.error('Failed to load collaborators:', error);
+      // Final fallback - show empty state
+      setRealCollaborators([]);
     } finally {
       setLoadingCollaborators(false);
     }
