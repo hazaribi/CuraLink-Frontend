@@ -169,16 +169,18 @@ export default function ResearcherDashboard() {
     const userInterests = profile.researchInterests.map((i: string) => i.toLowerCase());
     const collabInterests = collaborator.researchInterests?.map((i: string) => i.toLowerCase()) || [];
     const commonInterests = userInterests.filter((ui: string) => 
-      collabInterests.some((ci: string) => ci.includes(ui) || ui.includes(ci)) ||
-      // Enhanced matching for Parkinson's and movement disorders
-      (ui.includes('parkinson') && ci.includes('movement')) ||
-      (ui.includes('movement') && ci.includes('parkinson')) ||
-      (ui.includes('neurology') && ci.includes('pediatric')) ||
-      // Enhanced matching for proteomics and glioma
-      (ui.includes('proteomics') && ci.includes('glioma')) ||
-      (ui.includes('glioma') && ci.includes('proteomics')) ||
-      (ui.includes('recurrent') && ci.includes('glioma')) ||
-      (ui.includes('biomarker') && ci.includes('discovery'))
+      collabInterests.some((ci: string) => 
+        ci.includes(ui) || ui.includes(ci) ||
+        // Enhanced matching for Parkinson's and movement disorders
+        (ui.includes('parkinson') && ci.includes('movement')) ||
+        (ui.includes('movement') && ci.includes('parkinson')) ||
+        (ui.includes('neurology') && ci.includes('pediatric')) ||
+        // Enhanced matching for proteomics and glioma
+        (ui.includes('proteomics') && ci.includes('glioma')) ||
+        (ui.includes('glioma') && ci.includes('proteomics')) ||
+        (ui.includes('recurrent') && ci.includes('glioma')) ||
+        (ui.includes('biomarker') && ci.includes('discovery'))
+      )
     ).length;
     score += Math.min(commonInterests * 12, 35);
     
