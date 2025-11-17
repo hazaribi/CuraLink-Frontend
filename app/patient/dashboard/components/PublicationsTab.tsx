@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { apiService } from '../../../../lib/api';
 
 interface PatientProfile {
@@ -27,6 +27,7 @@ export default function PublicationsTab({ profile }: { profile: PatientProfile }
   const [journalFilter, setJournalFilter] = useState('');
   const [yearFilter, setYearFilter] = useState('');
   const [showAISummary, setShowAISummary] = useState<{[key: number]: boolean}>({});
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (profile?.condition) {
@@ -40,13 +41,28 @@ export default function PublicationsTab({ profile }: { profile: PatientProfile }
     try {
       const keyword = searchTerm ? `${profile.condition} ${searchTerm}` : profile.condition;
       const response = await apiService.getPublications(keyword, journalFilter);
-      setPublications(response.publications || []);
+      
+      // Remove duplicates based on title
+      const uniquePublications = removeDuplicates(response.publications || [], 'title');
+      setPublications(uniquePublications);
     } catch (error) {
       console.error('Publications API error:', error instanceof Error ? error.message : 'Unknown error');
       setPublications([]);
     } finally {
       setLoading(false);
     }
+  };
+
+  const removeDuplicates = (items: any[], key: string) => {
+    const seen = new Set();
+    return items.filter(item => {
+      const value = item[key];
+      if (seen.has(value)) {
+        return false;
+      }
+      seen.add(value);
+      return true;
+    });
   };
 
   const searchPublications = async () => {
@@ -61,7 +77,7 @@ export default function PublicationsTab({ profile }: { profile: PatientProfile }
       if (searchTerm.length > 2) {
         searchPublications();
       }
-    }, 300);
+    }, 800);
     return () => clearTimeout(timeoutId);
   }, [searchTerm]);
 
@@ -118,7 +134,7 @@ export default function PublicationsTab({ profile }: { profile: PatientProfile }
     return Math.min(score, 100);
   };
 
-  const filteredPublications = publications.filter(pub => {
+  const filteredPublications = useMemo(() => publications.filter(pub => {
     const searchLower = searchTerm.toLowerCase();
     const conditionLower = profile.condition.toLowerCase();
     
@@ -139,7 +155,7 @@ export default function PublicationsTab({ profile }: { profile: PatientProfile }
     
     return matchesSearch && matchesJournal && matchesYear;
   }).map(pub => ({ ...pub, matchScore: calculatePublicationMatchScore(pub) }))
-    .sort((a, b) => b.matchScore - a.matchScore);
+    .sort((a, b) => b.matchScore - a.matchScore), [publications, searchTerm, journalFilter, yearFilter, profile.condition, profile.location]);
 
   const researchKeywords = [
     'immunotherapy', 'chemotherapy', 'targeted therapy', 'biomarkers',
@@ -263,11 +279,13 @@ export default function PublicationsTab({ profile }: { profile: PatientProfile }
           </div>
           <div className="relative w-full sm:w-80">
             <input
+              ref={searchInputRef}
               type="text"
               placeholder={`Search (auto-includes ${profile.condition}): e.g., "stem cell therapy", "diet", "immunotherapy"`}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-gray-900 placeholder-gray-500"
+              autoComplete="off"
             />
             {searchTerm.length > 0 && (
               <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-40 overflow-y-auto">
@@ -375,7 +393,9 @@ export default function PublicationsTab({ profile }: { profile: PatientProfile }
             </div>
             
             <p className="text-sm text-gray-700 mb-3">
-              <strong>Authors:</strong> {(pub.authors || []).join(', ')}
+              <strong>Authors:</strong> {(pub.authors || ['Unknown Authors']).filter(author => 
+                author !== 'Research Team' && author.trim() !== ''
+              ).join(', ') || 'Authors not available'}
             </p>
             
             {pub.abstract && (

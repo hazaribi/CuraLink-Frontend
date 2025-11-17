@@ -6,13 +6,16 @@ const medicalConditions = [
   
   // Neurological
   'Alzheimer Disease', 'Parkinson Disease', 'Epilepsy', 'Multiple Sclerosis', 'Stroke', 'Migraine',
+  'ADHD', 'Attention-Deficit/Hyperactivity Disorder (ADHD)', 'Attention Deficit Hyperactivity Disorder',
+  'Multiple System Atrophy', 'Ductal Carcinoma in Situ', 'DCIS',
   
   // Cardiovascular
   'Heart Disease', 'Hypertension', 'Diabetes', 'High Blood Pressure', 'Cardiac Disease',
   
   // Other common conditions
   'Arthritis', 'Asthma', 'Depression', 'Anxiety', 'Obesity', 'Kidney Disease',
-  'Liver Disease', 'Autoimmune Disease', 'Fibromyalgia', 'Chronic Pain'
+  'Liver Disease', 'Autoimmune Disease', 'Fibromyalgia', 'Chronic Pain',
+  'Major Depressive Disorder', 'Major Depressive Disorder (Depression)', 'Treatment-Resistant Depression'
 ];
 
 const conditionSynonyms: { [key: string]: string } = {
@@ -36,6 +39,14 @@ const conditionSynonyms: { [key: string]: string } = {
   // Mental health
   'mental health': 'Depression',
   'ptsd': 'Anxiety',
+  'adhd': 'ADHD',
+  'attention deficit': 'ADHD',
+  'hyperactivity': 'ADHD',
+  'add': 'ADHD',
+  'major depression': 'Major Depressive Disorder',
+  'mdd': 'Major Depressive Disorder',
+  'clinical depression': 'Depression',
+  'depressive disorder': 'Major Depressive Disorder',
   
   // Diabetes
   'type 1 diabetes': 'Diabetes',

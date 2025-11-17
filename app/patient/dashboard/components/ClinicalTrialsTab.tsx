@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { apiService } from '../../../../lib/api';
 
 interface PatientProfile {
@@ -26,6 +26,7 @@ export default function ClinicalTrialsTab({ profile }: { profile: PatientProfile
   const [statusFilter, setStatusFilter] = useState('');
   const [locationFilter, setLocationFilter] = useState('');
   const [showAISummary, setShowAISummary] = useState<{[key: number]: boolean}>({});
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (profile?.condition) {
@@ -39,13 +40,28 @@ export default function ClinicalTrialsTab({ profile }: { profile: PatientProfile
     try {
       const searchQuery = searchTerm ? `${profile.condition} ${searchTerm}` : profile.condition;
       const response = await apiService.getClinicalTrials(searchQuery, profile.location);
-      setTrials(response.trials || []);
+      
+      // Remove duplicates based on title
+      const uniqueTrials = removeDuplicates(response.trials || [], 'title');
+      setTrials(uniqueTrials);
     } catch (error) {
       console.warn('Trials API unavailable, using fallback data');
       setTrials([]);
     } finally {
       setLoading(false);
     }
+  };
+
+  const removeDuplicates = (items: any[], key: string) => {
+    const seen = new Set();
+    return items.filter(item => {
+      const value = item[key];
+      if (seen.has(value)) {
+        return false;
+      }
+      seen.add(value);
+      return true;
+    });
   };
 
 
@@ -70,7 +86,7 @@ export default function ClinicalTrialsTab({ profile }: { profile: PatientProfile
       if (searchTerm.length > 2) {
         searchTrials();
       }
-    }, 500);
+    }, 800);
     return () => clearTimeout(timeoutId);
   }, [searchTerm]);
 
@@ -160,20 +176,27 @@ export default function ClinicalTrialsTab({ profile }: { profile: PatientProfile
     return Math.min(score, 100);
   };
 
-  const filteredTrials = trials.filter(trial => {
+  const filteredTrials = useMemo(() => trials.filter(trial => {
     const searchLower = searchTerm.toLowerCase();
     const conditionLower = profile.condition.toLowerCase();
     
-    // Enhanced search: combine user's condition with search term for disease-specific results
-    const enhancedSearch = searchTerm ? `${conditionLower} ${searchLower}` : conditionLower;
+    // Enhanced search with better term matching
+    const searchTerms = searchLower.split(/[\s+]+/).filter(term => term.length > 0);
     
     const matchesSearch = !searchTerm || 
       trial.title.toLowerCase().includes(searchLower) ||
       trial.phase.toLowerCase().includes(searchLower) ||
       (trial.description && trial.description.toLowerCase().includes(searchLower)) ||
-      // Disease-specific matching: search term + condition
-      trial.title.toLowerCase().includes(enhancedSearch) ||
-      (trial.description && trial.description.toLowerCase().includes(enhancedSearch));
+      // Multi-word search support (e.g., "multiple system atrophy", "ductal carcinoma")
+      searchTerms.every(term => 
+        trial.title.toLowerCase().includes(term) ||
+        (trial.description && trial.description.toLowerCase().includes(term))
+      ) ||
+      // Partial matches for complex conditions
+      (searchLower.includes('multiple system') && trial.title.toLowerCase().includes('multiple system')) ||
+      (searchLower.includes('system atrophy') && trial.title.toLowerCase().includes('system atrophy')) ||
+      (searchLower.includes('ductal carcinoma') && trial.title.toLowerCase().includes('ductal carcinoma')) ||
+      (searchLower.includes('breast cancer') && (trial.title.toLowerCase().includes('breast') || trial.title.toLowerCase().includes('ductal')));
     
     const matchesPhase = !phaseFilter || trial.phase.toLowerCase().includes(phaseFilter.toLowerCase());
     const matchesStatus = !statusFilter || trial.status.toLowerCase().includes(statusFilter.toLowerCase());
@@ -192,7 +215,7 @@ export default function ClinicalTrialsTab({ profile }: { profile: PatientProfile
       }
       // Secondary sort: match score (highest first)
       return b.matchScore - a.matchScore;
-    });
+    }), [trials, searchTerm, phaseFilter, statusFilter, locationFilter, profile.condition, profile.location]);
 
   const generateAISummary = (trial: ClinicalTrial) => {
     const title = trial.title.toLowerCase();
@@ -457,11 +480,13 @@ ${body}`;
           </div>
           <div className="relative w-full sm:w-80">
             <input
+              ref={searchInputRef}
               type="text"
               placeholder={`Search (auto-includes ${profile.condition}): e.g., "multiple system atrophy", "immunotherapy", "vaccine"`}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-gray-900 placeholder-gray-500"
+              autoComplete="off"
             />
             {searchTerm.length > 0 && (
               <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-40 overflow-y-auto">

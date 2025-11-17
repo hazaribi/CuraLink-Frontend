@@ -8,13 +8,15 @@ import { getLocationSuggestions } from '../../../lib/locationProcessor';
 // Popular conditions for quick selection
 const popularConditions = [
   'Brain Cancer', 'Lung Cancer', 'Breast Cancer', 'Heart Disease', 'Diabetes',
-  'Alzheimer Disease', 'Parkinson Disease', 'Multiple Sclerosis', 'Arthritis', 'Depression'
+  'Alzheimer Disease', 'Parkinson Disease', 'Multiple Sclerosis', 'Arthritis', 'Depression',
+  'ADHD', 'Attention-Deficit/Hyperactivity Disorder (ADHD)', 'Major Depressive Disorder (Depression)'
 ];
 
 // Popular locations for quick selection
 const popularLocations = [
   'New York, USA', 'Los Angeles, USA', 'Chicago, USA', 'London, UK', 'Toronto, Canada',
-  'Sydney, Australia', 'Mumbai, India', 'Berlin, Germany', 'Tokyo, Japan', 'Paris, France'
+  'Sydney, Australia', 'Mumbai, India', 'Berlin, Germany', 'Tokyo, Japan', 'Paris, France',
+  'Amsterdam, Netherlands'
 ];
 
 export default function PatientOnboarding() {

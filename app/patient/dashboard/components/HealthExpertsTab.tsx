@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { apiService } from '../../../../lib/api';
 import MeetingRequestModal from './MeetingRequestModal';
 import ResearcherProfileModal from './ResearcherProfileModal';
@@ -24,6 +24,7 @@ export default function HealthExpertsTab({ profile }: { profile: PatientProfile 
   const [experts, setExperts] = useState<HealthExpert[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [favorites, setFavorites] = useState<number[]>([]);
   const [selectedExpert, setSelectedExpert] = useState<HealthExpert | null>(null);
   const [showMeetingModal, setShowMeetingModal] = useState(false);
@@ -33,6 +34,9 @@ export default function HealthExpertsTab({ profile }: { profile: PatientProfile 
   const [filterCountry, setFilterCountry] = useState('');
   const [showAllLocations, setShowAllLocations] = useState(false);
   const [includeExternal, setIncludeExternal] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const resultsContainerRef = useRef<HTMLDivElement>(null);
+  const [scrollPosition, setScrollPosition] = useState(0);
 
   useEffect(() => {
     if (profile?.condition) {
@@ -43,10 +47,22 @@ export default function HealthExpertsTab({ profile }: { profile: PatientProfile 
 
   const loadExperts = async () => {
     try {
+      // Save scroll position before loading
+      if (resultsContainerRef.current) {
+        setScrollPosition(resultsContainerRef.current.scrollTop);
+      }
+      
       // Always pass the condition to get relevant experts
-      const searchQuery = searchTerm ? `${profile.condition} ${searchTerm}` : profile.condition;
+      const searchQuery = debouncedSearchTerm ? `${profile.condition} ${debouncedSearchTerm}` : profile.condition;
       const response = await apiService.getHealthExperts(searchQuery, profile.location, includeExternal);
       setExperts(response.experts || []);
+      
+      // Restore scroll position after a brief delay
+      setTimeout(() => {
+        if (resultsContainerRef.current && scrollPosition > 0) {
+          resultsContainerRef.current.scrollTop = scrollPosition;
+        }
+      }, 100);
     } catch (error) {
       console.warn('Experts API unavailable, using fallback data');
       setExperts([]);
@@ -62,16 +78,21 @@ export default function HealthExpertsTab({ profile }: { profile: PatientProfile 
     }
   }, [includeExternal]);
 
-  // Reload experts when search term changes
+  // Debounce search term
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      if (profile?.condition) {
-        setLoading(true);
-        loadExperts();
-      }
+      setDebouncedSearchTerm(searchTerm);
     }, 300);
     return () => clearTimeout(timeoutId);
   }, [searchTerm]);
+
+  // Reload experts when debounced search term changes
+  useEffect(() => {
+    if (profile?.condition) {
+      setLoading(true);
+      loadExperts();
+    }
+  }, [debouncedSearchTerm]);
 
   const loadFavorites = () => {
     const saved = localStorage.getItem('patientFavorites');
@@ -219,7 +240,7 @@ export default function HealthExpertsTab({ profile }: { profile: PatientProfile 
     return Math.min(score, 100);
   };
 
-  const filteredExperts = experts.filter(expert => {
+  const filteredExperts = useMemo(() => experts.filter(expert => {
     const searchLower = searchTerm.toLowerCase();
     const conditionLower = profile.condition.toLowerCase();
     
@@ -255,13 +276,22 @@ export default function HealthExpertsTab({ profile }: { profile: PatientProfile 
     locationDistance: calculateLocationDistance(expert.location, profile.location)
   }))
     .sort((a, b) => {
-      // Primary sort: location distance (closest first)
+      // If searching, prioritize match score first
+      if (searchTerm.trim()) {
+        // Primary sort: match score (highest first)
+        if (Math.abs(b.matchScore - a.matchScore) > 5) {
+          return b.matchScore - a.matchScore;
+        }
+        // Secondary sort: location distance (closest first)
+        return a.locationDistance - b.locationDistance;
+      }
+      
+      // Default sort when not searching: location first, then match score
       if (a.locationDistance !== b.locationDistance) {
         return a.locationDistance - b.locationDistance;
       }
-      // Secondary sort: match score (highest first)
       return b.matchScore - a.matchScore;
-    });
+    }), [experts, searchTerm, showAllLocations, filterCity, filterCountry, profile.condition, profile.location]);
 
   if (loading) return <div className="text-center py-8">Loading experts...</div>;
 
@@ -277,11 +307,19 @@ export default function HealthExpertsTab({ profile }: { profile: PatientProfile 
             </div>
           </div>
           <input
+            ref={searchInputRef}
             type="text"
             placeholder={`Search (auto-includes ${profile.condition}): e.g., "deep brain stimulation", "immunotherapy", "diet"`}
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              // Keep focus on input to prevent jumping
+              if (searchInputRef.current) {
+                setTimeout(() => searchInputRef.current?.focus(), 0);
+              }
+            }}
             className="w-full sm:w-80 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-gray-900 placeholder-gray-500"
+            autoComplete="off"
           />
         </div>
         
@@ -335,7 +373,7 @@ export default function HealthExpertsTab({ profile }: { profile: PatientProfile 
         </div>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div ref={resultsContainerRef} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-h-[800px] overflow-y-auto">
         {filteredExperts.map((expert) => (
           <div key={expert.id} className="bg-white border border-gray-200 rounded-xl p-4 shadow-card hover:shadow-elevated transition-shadow duration-200">
             <div className="flex items-center mb-3">
