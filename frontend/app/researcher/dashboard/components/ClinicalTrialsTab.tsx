@@ -234,6 +234,14 @@ export default function ClinicalTrialsTab({ onSaveTrial, isFavorited, onRemoveTr
             )}
 
             <div className="flex gap-2 mt-4">
+              <a 
+                href={`https://clinicaltrials.gov/search?term=${encodeURIComponent(trial.title)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 flex items-center gap-1"
+              >
+                🔗 ClinicalTrials.gov ↗
+              </a>
               <button 
                 onClick={() => setShowAnalytics(trial.id)}
                 className="px-3 py-1 bg-purple-600 text-white text-sm rounded hover:bg-purple-700"

@@ -187,6 +187,14 @@ class ApiService {
         location: 'Amsterdam, Netherlands',
         description: 'Randomized trial comparing cognitive training to neurofeedback in ADHD children.'
       },
+      {
+        id: 22,
+        title: 'ADHD Medication Response Amsterdam Study',
+        phase: 'Phase III',
+        status: 'Recruiting',
+        location: 'Amsterdam, Netherlands',
+        description: 'Predicting medication response in ADHD patients using neuroimaging biomarkers.'
+      },
 
       // Freezing of Gait Trials (Toronto)
       {
@@ -196,6 +204,14 @@ class ApiService {
         status: 'Recruiting',
         location: 'Toronto, Ontario, Canada',
         description: 'Testing novel interventions for freezing of gait episodes in PD.'
+      },
+      {
+        id: 21,
+        title: 'Deep Brain Stimulation for Freezing of Gait',
+        phase: 'Phase III',
+        status: 'Recruiting',
+        location: 'Toronto, Canada',
+        description: 'Evaluating DBS effectiveness for freezing of gait in Parkinson\'s disease.'
       },
       // Bevacizumab Glioma Trials
       {
@@ -239,6 +255,14 @@ class ApiService {
         status: 'Recruiting',
         location: 'Amsterdam, Netherlands',
         description: 'Comparing TMS protocols for major depressive disorder treatment in Amsterdam.'
+      },
+      {
+        id: 23,
+        title: 'Psilocybin Depression Amsterdam Clinical Trial',
+        phase: 'Phase II',
+        status: 'Recruiting',
+        location: 'Amsterdam, Netherlands',
+        description: 'Psilocybin-assisted therapy for treatment-resistant depression in Amsterdam medical centers.'
       }
     ];
 
@@ -272,7 +296,9 @@ class ApiService {
         (searchLower.includes('radiotherapy') && trial.title.toLowerCase().includes('radiotherapy')) ||
         (searchLower.includes('dopamine') && (trial.title.toLowerCase().includes('dopamine') || trial.description?.toLowerCase().includes('dopamine'))) ||
         (searchLower.includes('psilocybin') && (trial.title.toLowerCase().includes('psilocybin') || trial.description?.toLowerCase().includes('psilocybin'))) ||
-        (searchLower.includes('depression') && (trial.title.toLowerCase().includes('depression') || trial.description?.toLowerCase().includes('depression'))) ||
+        (searchLower.includes('freezing') && trial.title.toLowerCase().includes('freezing')) ||
+        (searchLower.includes('gait') && trial.title.toLowerCase().includes('gait')) ||
+        (searchLower.includes('medication response') && trial.title.toLowerCase().includes('medication response')) ||
         (searchLower.includes('amsterdam') && trial.location.toLowerCase().includes('amsterdam'));
       
       const matchesLocation = true; // Simplified for now
@@ -781,11 +807,12 @@ class ApiService {
 
     // Remove duplicates based on title and ensure proper authors
     const seen = new Set();
-    return filtered.filter(pub => {
-      if (seen.has(pub.title)) {
+    const unique = filtered.filter(pub => {
+      const titleKey = pub.title.toLowerCase().trim();
+      if (seen.has(titleKey)) {
         return false;
       }
-      seen.add(pub.title);
+      seen.add(titleKey);
       return true;
     }).map(pub => ({
       ...pub,
@@ -793,6 +820,16 @@ class ApiService {
         ? pub.authors 
         : ['Authors not available']
     }));
+    
+    // Sort by relevance - exact matches first
+    return unique.sort((a, b) => {
+      const keywordLower = (keyword || '').toLowerCase();
+      const aExact = a.title.toLowerCase().includes(keywordLower);
+      const bExact = b.title.toLowerCase().includes(keywordLower);
+      if (aExact && !bExact) return -1;
+      if (!aExact && bExact) return 1;
+      return 0;
+    });
   }
 
   // Collaborators API methods
@@ -964,7 +1001,7 @@ class ApiService {
 
     ];
 
-    // Very permissive filtering - show results for any partial match
+    // Enhanced filtering to show relevant collaborators
     return mockCollaborators.filter(collab => {
       const specialtyLower = (specialty || '').toLowerCase();
       const searchLower = (research_interest || '').toLowerCase();
@@ -972,13 +1009,42 @@ class ApiService {
       // If no search terms, return all
       if (!specialty && !research_interest) return true;
       
-      // Split search terms for better matching
+      // Enhanced matching for specific researcher types
+      const allTerms = `${specialtyLower} ${searchLower}`.toLowerCase();
+      
+      // Pediatric neurology matching (for Dr. John Smith)
+      if (allTerms.includes('pediatric') || allTerms.includes('neurology')) {
+        return collab.specialty.toLowerCase().includes('pediatric') ||
+               collab.specialty.toLowerCase().includes('neurology') ||
+               collab.researchInterests.some(interest => 
+                 interest.toLowerCase().includes('pediatric') ||
+                 interest.toLowerCase().includes('neurology')
+               );
+      }
+      
+      // Proteomics matching (for Dr. Jane Smith)
+      if (allTerms.includes('proteomics') || allTerms.includes('glioma')) {
+        return collab.specialty.toLowerCase().includes('proteomics') ||
+               collab.specialty.toLowerCase().includes('glioma') ||
+               collab.researchInterests.some(interest => 
+                 interest.toLowerCase().includes('proteomics') ||
+                 interest.toLowerCase().includes('glioma')
+               );
+      }
+      
+      // Neuroimaging matching (for ADHD and Depression researchers)
+      if (allTerms.includes('neuroimaging')) {
+        return collab.specialty.toLowerCase().includes('neuroimaging') ||
+               collab.researchInterests.some(interest => 
+                 interest.toLowerCase().includes('neuroimaging') ||
+                 interest.toLowerCase().includes('adhd') ||
+                 interest.toLowerCase().includes('depression')
+               );
+      }
+      
+      // General matching
       const searchTerms = searchLower.split(/[+\s]+/).filter(term => term.length > 0);
-      
-      // Check if any search term matches anywhere
       const allSearchTerms = [...(specialty ? [specialtyLower] : []), ...searchTerms];
-      
-      if (allSearchTerms.length === 0) return true;
       
       return allSearchTerms.some(term => 
         collab.name.toLowerCase().includes(term) ||
