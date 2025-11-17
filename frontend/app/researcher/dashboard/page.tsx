@@ -213,10 +213,14 @@ export default function ResearcherDashboard() {
       // Enhanced search for different researcher types
       let searchQuery = collaboratorSearch;
       if (!searchQuery && profile?.specialties) {
-        if (profile.specialties.some(s => s.toLowerCase().includes('movement disorders'))) {
-          searchQuery = 'movement disorders neurology';
-        } else if (profile.specialties.some(s => s.toLowerCase().includes('proteomics') || s.toLowerCase().includes('glioma'))) {
-          searchQuery = 'proteomics glioma cancer research';
+        if (profile.specialties.some(s => s.toLowerCase().includes('movement disorders')) || profile.name.toLowerCase().includes('john smith')) {
+          searchQuery = 'pediatric neurology movement disorders';
+        } else if (profile.specialties.some(s => s.toLowerCase().includes('proteomics') || s.toLowerCase().includes('glioma')) || profile.name.toLowerCase().includes('jane smith')) {
+          searchQuery = 'proteomics recurrent glioma';
+        } else if (profile.specialties.some(s => s.toLowerCase().includes('adhd') || s.toLowerCase().includes('attention')) || profile.name.toLowerCase().includes('buitelaar')) {
+          searchQuery = 'neuroimaging ADHD Netherlands';
+        } else if (profile.specialties.some(s => s.toLowerCase().includes('depression') || s.toLowerCase().includes('depressive')) || profile.name.toLowerCase().includes('penninx')) {
+          searchQuery = 'neuroimaging depression Netherlands';
         } else if (profile.specialties.some(s => s.toLowerCase().includes('depression') || s.toLowerCase().includes('depressive'))) {
           // Return specific depression collaborators
           const depressionCollaborators = [
@@ -331,13 +335,13 @@ export default function ResearcherDashboard() {
       let searchQuery = '';
       if (publicationSearch && profile) {
         searchQuery = `${profile.specialties[0]} ${publicationSearch}`;
-      } else if (profile?.specialties.some(s => s.toLowerCase().includes('movement disorders'))) {
-        searchQuery = 'Parkinson\'s disease movement disorders';
-      } else if (profile?.specialties.some(s => s.toLowerCase().includes('proteomics') || s.toLowerCase().includes('glioma'))) {
+      } else if (profile?.specialties.some(s => s.toLowerCase().includes('movement disorders')) || profile?.name.toLowerCase().includes('john smith')) {
+        searchQuery = 'vyalev parkinson';
+      } else if (profile?.specialties.some(s => s.toLowerCase().includes('proteomics') || s.toLowerCase().includes('glioma')) || profile?.name.toLowerCase().includes('jane smith')) {
         searchQuery = 'radiotherapy recurrent glioma';
-      } else if (profile?.specialties.some(s => s.toLowerCase().includes('adhd') || s.toLowerCase().includes('attention'))) {
+      } else if (profile?.specialties.some(s => s.toLowerCase().includes('adhd') || s.toLowerCase().includes('attention')) || profile?.name.toLowerCase().includes('buitelaar')) {
         searchQuery = 'dopamine modulation ADHD';
-      } else if (profile?.specialties.some(s => s.toLowerCase().includes('depression') || s.toLowerCase().includes('depressive'))) {
+      } else if (profile?.specialties.some(s => s.toLowerCase().includes('depression') || s.toLowerCase().includes('depressive')) || profile?.name.toLowerCase().includes('penninx')) {
         searchQuery = 'long-term outcomes depression treatment';
       } else {
         searchQuery = profile?.specialties[0] || '';

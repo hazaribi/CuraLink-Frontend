@@ -280,14 +280,24 @@ class ApiService {
       return matchesCondition && matchesLocation;
     });
 
-    // Remove duplicates based on title
+    // Remove duplicates based on title and ensure proper ordering
     const seen = new Set();
-    return filtered.filter(trial => {
+    const unique = filtered.filter(trial => {
       if (seen.has(trial.title)) {
         return false;
       }
       seen.add(trial.title);
       return true;
+    });
+    
+    // Sort by relevance - exact matches first, then partial matches
+    return unique.sort((a, b) => {
+      const searchLower = (condition || '').toLowerCase();
+      const aExact = a.title.toLowerCase().includes(searchLower);
+      const bExact = b.title.toLowerCase().includes(searchLower);
+      if (aExact && !bExact) return -1;
+      if (!aExact && bExact) return 1;
+      return 0;
     });
   }
 
@@ -490,18 +500,29 @@ class ApiService {
       const searchLower = (searchTerm || '').toLowerCase();
       const locationLower = (location || '').toLowerCase();
       
-      // Enhanced ADHD matching
+      // Enhanced condition matching
+      const isParkinsonSearch = searchLower.includes('parkinson') || searchLower.includes('movement disorders');
+      const isBreastCancerSearch = searchLower.includes('breast cancer') || searchLower.includes('ductal carcinoma');
       const isADHDSearch = searchLower.includes('adhd') || searchLower.includes('attention-deficit') || searchLower.includes('hyperactivity');
+      const isDepressionSearch = searchLower.includes('depression') || searchLower.includes('depressive');
       
       const matchesSearch = !searchTerm || 
         expert.name.toLowerCase().includes(searchLower) ||
         expert.specialty.toLowerCase().includes(searchLower) ||
         expert.institution.toLowerCase().includes(searchLower) ||
         expert.research_interests.some(interest => interest.toLowerCase().includes(searchLower)) ||
-        (isADHDSearch && expert.research_interests.some(interest => interest.toLowerCase().includes('adhd')));
+        // Enhanced condition-specific matching
+        (isParkinsonSearch && (expert.specialty.toLowerCase().includes('movement disorders') || expert.research_interests.some(interest => interest.toLowerCase().includes('parkinson') || interest.toLowerCase().includes('deep brain')))) ||
+        (isBreastCancerSearch && (expert.specialty.toLowerCase().includes('breast cancer') || expert.research_interests.some(interest => interest.toLowerCase().includes('breast cancer') || interest.toLowerCase().includes('ductal carcinoma')))) ||
+        (isADHDSearch && (expert.specialty.toLowerCase().includes('adhd') || expert.specialty.toLowerCase().includes('child') || expert.research_interests.some(interest => interest.toLowerCase().includes('adhd')))) ||
+        (isDepressionSearch && (expert.specialty.toLowerCase().includes('psychiatry') || expert.research_interests.some(interest => interest.toLowerCase().includes('depression'))));
       
       const matchesLocation = !location ||
-        expert.location.toLowerCase().includes(locationLower);
+        expert.location.toLowerCase().includes(locationLower) ||
+        expert.location.toLowerCase().includes(locationLower.split(',')[0]) ||
+        (locationLower.includes('toronto') && expert.location.toLowerCase().includes('toronto')) ||
+        (locationLower.includes('amsterdam') && expert.location.toLowerCase().includes('amsterdam')) ||
+        (locationLower.includes('los angeles') && expert.location.toLowerCase().includes('los angeles'));
       
       return matchesSearch && matchesLocation;
     });
@@ -717,33 +738,38 @@ class ApiService {
       }
     ];
 
-    // Enhanced filtering with better ADHD matching
+    // Enhanced filtering with better condition matching
     const filtered = mockPublications.filter(pub => {
       const keywordLower = (keyword || '').toLowerCase();
       const journalLower = (journal || '').toLowerCase();
       
-      // Enhanced ADHD search matching
+      // Enhanced condition-specific search matching
+      const isParkinsonSearch = keywordLower.includes('parkinson') || keywordLower.includes('vyalev');
+      const isBreastCancerSearch = keywordLower.includes('breast cancer') || keywordLower.includes('ductal carcinoma');
       const isADHDSearch = keywordLower.includes('adhd') || keywordLower.includes('attention-deficit') || keywordLower.includes('hyperactivity');
       const isMethylphenidateSearch = keywordLower.includes('methylphenidate') || keywordLower.includes('brain connectivity');
+      const isDepressionSearch = keywordLower.includes('depression') || keywordLower.includes('depressive');
+      const isGliomaSearch = keywordLower.includes('glioma') || keywordLower.includes('recurrent glioma');
+      const isDietSearch = keywordLower.includes('diet');
       
       const matchesKeyword = !keyword ||
         pub.title.toLowerCase().includes(keywordLower) ||
         pub.abstract?.toLowerCase().includes(keywordLower) ||
         pub.authors.some(author => author.toLowerCase().includes(keywordLower)) ||
+        // Enhanced condition-specific matching
+        (isParkinsonSearch && (pub.title.toLowerCase().includes('parkinson') || pub.title.toLowerCase().includes('vyalev') || pub.title.toLowerCase().includes('deep brain stimulation'))) ||
+        (isBreastCancerSearch && (pub.title.toLowerCase().includes('breast cancer') || pub.title.toLowerCase().includes('ductal carcinoma'))) ||
+        (isDietSearch && isBreastCancerSearch && pub.title.toLowerCase().includes('diet')) ||
         (isADHDSearch && (pub.title.toLowerCase().includes('adhd') || pub.abstract?.toLowerCase().includes('adhd'))) ||
         (isMethylphenidateSearch && (pub.title.toLowerCase().includes('methylphenidate') || pub.abstract?.toLowerCase().includes('methylphenidate'))) ||
-        // Enhanced depression search matching
-        (keywordLower.includes('depression') && (pub.title.toLowerCase().includes('depression') || pub.abstract?.toLowerCase().includes('depression'))) ||
+        (isDepressionSearch && (pub.title.toLowerCase().includes('depression') || pub.abstract?.toLowerCase().includes('depression'))) ||
         (keywordLower.includes('ketamine') && (pub.title.toLowerCase().includes('ketamine') || pub.abstract?.toLowerCase().includes('ketamine'))) ||
         (keywordLower.includes('brain stimulation') && (pub.title.toLowerCase().includes('brain stimulation') || pub.title.toLowerCase().includes('tms') || pub.title.toLowerCase().includes('deep brain'))) ||
-        // Enhanced glioma and proteomics search matching
-        (keywordLower.includes('glioma') && (pub.title.toLowerCase().includes('glioma') || pub.abstract?.toLowerCase().includes('glioma'))) ||
+        (isGliomaSearch && (pub.title.toLowerCase().includes('glioma') || pub.abstract?.toLowerCase().includes('glioma'))) ||
         (keywordLower.includes('radiotherapy') && (pub.title.toLowerCase().includes('radiotherapy') || pub.abstract?.toLowerCase().includes('radiotherapy'))) ||
         (keywordLower.includes('proteomics') && (pub.title.toLowerCase().includes('proteomics') || pub.abstract?.toLowerCase().includes('proteomics'))) ||
-        // Enhanced ADHD dopamine search matching
         (keywordLower.includes('dopamine') && (pub.title.toLowerCase().includes('dopamine') || pub.abstract?.toLowerCase().includes('dopamine'))) ||
         (keywordLower.includes('modulation') && (pub.title.toLowerCase().includes('modulation') || pub.abstract?.toLowerCase().includes('modulation'))) ||
-        // Enhanced long-term outcomes depression search matching
         (keywordLower.includes('long-term') && keywordLower.includes('outcomes') && (pub.title.toLowerCase().includes('long-term') || pub.abstract?.toLowerCase().includes('long-term'))) ||
         (keywordLower.includes('treatment') && keywordLower.includes('depression') && (pub.title.toLowerCase().includes('treatment') && pub.title.toLowerCase().includes('depression')));
       
