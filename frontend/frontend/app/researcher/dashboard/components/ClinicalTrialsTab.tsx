@@ -32,25 +32,7 @@ export default function ClinicalTrialsTab({ onSaveTrial, isFavorited, onRemoveTr
     const loadTrials = async () => {
       try {
         const { apiService } = await import('@/lib/api');
-        // Get researcher profile to determine search query
-        const savedProfile = localStorage.getItem('researcherProfile');
-        let searchQuery = '';
-        if (savedProfile) {
-          const profile = JSON.parse(savedProfile);
-          if (profile.specialties?.some((s: string) => s.toLowerCase().includes('movement disorders'))) {
-            searchQuery = 'movement disorders Parkinson\'s disease';
-          } else if (profile.specialties?.some((s: string) => s.toLowerCase().includes('neurology'))) {
-            searchQuery = 'neurology pediatric';
-          } else if (profile.specialties?.some((s: string) => s.toLowerCase().includes('proteomics') || s.toLowerCase().includes('glioma'))) {
-            searchQuery = 'glioma bevacizumab radiotherapy';
-          } else if (profile.specialties?.some((s: string) => s.toLowerCase().includes('adhd') || s.toLowerCase().includes('attention'))) {
-            searchQuery = 'ADHD dopamine modulation Amsterdam';
-          } else if (profile.specialties?.some((s: string) => s.toLowerCase().includes('depression') || s.toLowerCase().includes('depressive'))) {
-            searchQuery = 'psilocybin depression Amsterdam';
-          }
-        }
-        
-        const response = await apiService.getClinicalTrials(searchQuery);
+        const response = await apiService.getClinicalTrials();
         const apiTrialsData = response.trials || [];
         
         // Convert API trials to component format

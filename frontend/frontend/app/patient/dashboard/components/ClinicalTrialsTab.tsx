@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { apiService } from '../../../../lib/api';
 
 interface PatientProfile {
@@ -40,28 +40,13 @@ export default function ClinicalTrialsTab({ profile }: { profile: PatientProfile
     try {
       const searchQuery = searchTerm ? `${profile.condition} ${searchTerm}` : profile.condition;
       const response = await apiService.getClinicalTrials(searchQuery, profile.location);
-      
-      // Remove duplicates based on title
-      const uniqueTrials = removeDuplicates(response.trials || [], 'title');
-      setTrials(uniqueTrials);
+      setTrials(response.trials || []);
     } catch (error) {
       console.warn('Trials API unavailable, using fallback data');
       setTrials([]);
     } finally {
       setLoading(false);
     }
-  };
-
-  const removeDuplicates = (items: any[], key: string) => {
-    const seen = new Set();
-    return items.filter(item => {
-      const value = item[key];
-      if (seen.has(value)) {
-        return false;
-      }
-      seen.add(value);
-      return true;
-    });
   };
 
 
@@ -176,27 +161,20 @@ export default function ClinicalTrialsTab({ profile }: { profile: PatientProfile
     return Math.min(score, 100);
   };
 
-  const filteredTrials = useMemo(() => trials.filter(trial => {
+  const filteredTrials = trials.filter(trial => {
     const searchLower = searchTerm.toLowerCase();
     const conditionLower = profile.condition.toLowerCase();
     
-    // Enhanced search with better term matching
-    const searchTerms = searchLower.split(/[\s+]+/).filter(term => term.length > 0);
+    // Enhanced search: combine user's condition with search term for disease-specific results
+    const enhancedSearch = searchTerm ? `${conditionLower} ${searchLower}` : conditionLower;
     
     const matchesSearch = !searchTerm || 
       trial.title.toLowerCase().includes(searchLower) ||
       trial.phase.toLowerCase().includes(searchLower) ||
       (trial.description && trial.description.toLowerCase().includes(searchLower)) ||
-      // Multi-word search support (e.g., "multiple system atrophy", "ductal carcinoma")
-      searchTerms.every(term => 
-        trial.title.toLowerCase().includes(term) ||
-        (trial.description && trial.description.toLowerCase().includes(term))
-      ) ||
-      // Partial matches for complex conditions
-      (searchLower.includes('multiple system') && trial.title.toLowerCase().includes('multiple system')) ||
-      (searchLower.includes('system atrophy') && trial.title.toLowerCase().includes('system atrophy')) ||
-      (searchLower.includes('ductal carcinoma') && trial.title.toLowerCase().includes('ductal carcinoma')) ||
-      (searchLower.includes('breast cancer') && (trial.title.toLowerCase().includes('breast') || trial.title.toLowerCase().includes('ductal')));
+      // Disease-specific matching: search term + condition
+      trial.title.toLowerCase().includes(enhancedSearch) ||
+      (trial.description && trial.description.toLowerCase().includes(enhancedSearch));
     
     const matchesPhase = !phaseFilter || trial.phase.toLowerCase().includes(phaseFilter.toLowerCase());
     const matchesStatus = !statusFilter || trial.status.toLowerCase().includes(statusFilter.toLowerCase());
@@ -215,7 +193,7 @@ export default function ClinicalTrialsTab({ profile }: { profile: PatientProfile
       }
       // Secondary sort: match score (highest first)
       return b.matchScore - a.matchScore;
-    }), [trials, searchTerm, phaseFilter, statusFilter, locationFilter, profile.condition, profile.location]);
+    });
 
   const generateAISummary = (trial: ClinicalTrial) => {
     const title = trial.title.toLowerCase();

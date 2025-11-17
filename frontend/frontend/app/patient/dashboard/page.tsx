@@ -83,29 +83,25 @@ export default function PatientDashboard() {
     
     setLoading(true);
     try {
-      // Load data for top recommendations with proper search terms
+      // Load data for top recommendations
       const [trialsResponse, expertsResponse, publicationsResponse] = await Promise.all([
-        apiService.getClinicalTrials(profileData.condition, profileData.location).catch(() => ({ trials: [] })),
-        apiService.getHealthExperts(profileData.condition, profileData.location).catch(() => ({ experts: [] })),
+        apiService.getClinicalTrials(profileData.condition).catch(() => ({ trials: [] })),
+        apiService.getHealthExperts().catch(() => ({ experts: [] })),
         apiService.getPublications(profileData.condition, '').catch(() => ({ publications: [] }))
       ]);
       
-      // Remove duplicates and calculate scores
-      const uniqueTrials = removeDuplicates(trialsResponse.trials || [], 'title');
-      const uniqueExperts = removeDuplicates(expertsResponse.experts || [], 'name');
-      const uniquePublications = removeDuplicates(publicationsResponse.publications || [], 'title');
-      
-      const scoredTrials = uniqueTrials.map((trial: any) => ({
+      // Calculate scores and get top items
+      const scoredTrials = (trialsResponse.trials || []).map((trial: any) => ({
         ...trial,
         score: calculateTrialScore(trial, profileData)
       })).sort((a: any, b: any) => b.score - a.score);
       
-      const scoredExperts = uniqueExperts.map((expert: any) => ({
+      const scoredExperts = (expertsResponse.experts || []).map((expert: any) => ({
         ...expert,
         score: calculateExpertScore(expert, profileData)
       })).sort((a: any, b: any) => b.score - a.score);
       
-      const scoredPublications = uniquePublications.map((pub: any) => ({
+      const scoredPublications = (publicationsResponse.publications || []).map((pub: any) => ({
         ...pub,
         score: calculatePublicationScore(pub, profileData)
       })).sort((a: any, b: any) => b.score - a.score);
@@ -127,18 +123,6 @@ export default function PatientDashboard() {
     }
   };
 
-  const removeDuplicates = (items: any[], key: string) => {
-    const seen = new Set();
-    return items.filter(item => {
-      const value = item[key];
-      if (seen.has(value)) {
-        return false;
-      }
-      seen.add(value);
-      return true;
-    });
-  };
-
   const calculateTrialScore = (trial: any, profile: PatientProfile) => {
     let score = 0;
     const condition = profile.condition.toLowerCase();
@@ -152,59 +136,22 @@ export default function PatientDashboard() {
   const calculateExpertScore = (expert: any, profile: PatientProfile) => {
     let score = 0;
     const condition = profile.condition.toLowerCase();
-    const location = profile.location.toLowerCase();
-    
-    // Specialty match (40% weight)
     if (expert.specialty.toLowerCase().includes(condition)) score += 40;
-    else if (condition.includes('parkinson') && expert.specialty.toLowerCase().includes('movement disorders')) score += 35;
-    else if (condition.includes('cancer') && expert.specialty.toLowerCase().includes('oncology')) score += 35;
-    
-    // Research interests match (30% weight)
-    const matchingInterests = (expert.research_interests || []).filter((interest: string) => 
-      interest.toLowerCase().includes(condition) || 
-      (condition.includes('parkinson') && interest.toLowerCase().includes('deep brain stimulation'))
-    ).length;
-    score += Math.min(matchingInterests * 15, 30);
-    
-    // Location proximity (20% weight)
-    if (expert.location.toLowerCase().includes(location.split(',')[0])) score += 20;
-    else if (expert.location.toLowerCase().includes(location.split(',')[1]?.trim() || '')) score += 15;
-    
-    // Availability (10% weight)
-    if (expert.available_for_meetings) score += 10;
-    
-    return Math.min(score, 100);
+    if (expert.research_interests.some((i: string) => i.toLowerCase().includes(condition))) score += 30;
+    if (expert.available_for_meetings) score += 20;
+    if (expert.location.toLowerCase().includes(profile.location.toLowerCase())) score += 10;
+    return score;
   };
 
   const calculatePublicationScore = (pub: any, profile: PatientProfile) => {
     let score = 0;
     const condition = profile.condition.toLowerCase();
-    const title = pub.title.toLowerCase();
-    const abstract = pub.abstract?.toLowerCase() || '';
-    
-    // Title relevance (40% weight)
-    if (title.includes(condition)) score += 40;
-    else if (condition.includes('parkinson') && title.includes('deep brain stimulation')) score += 35;
-    else if (title.includes(condition.split(' ')[0])) score += 25;
-    
-    // Abstract relevance (25% weight)
-    if (abstract.includes(condition)) score += 25;
-    else if (abstract.includes(condition.split(' ')[0])) score += 15;
-    
-    // Journal impact (20% weight)
-    const journal = pub.journal.toLowerCase();
-    if (journal.includes('nature') || journal.includes('nejm') || journal.includes('lancet')) score += 20;
-    else if (journal.includes('journal')) score += 10;
-    
-    // Recency (15% weight)
+    if (pub.title.toLowerCase().includes(condition)) score += 40;
     const year = parseInt(pub.date);
-    const currentYear = new Date().getFullYear();
-    const yearsOld = currentYear - year;
-    if (yearsOld <= 1) score += 15;
-    else if (yearsOld <= 3) score += 10;
-    else if (yearsOld <= 5) score += 5;
-    
-    return Math.min(score, 100);
+    if (year >= 2023) score += 30;
+    else if (year >= 2021) score += 20;
+    if (pub.journal.toLowerCase().includes('nature') || pub.journal.toLowerCase().includes('nejm')) score += 10;
+    return score;
   };
 
   if (!profile) return <div className="min-h-screen bg-gray-50 flex items-center justify-center">Loading...</div>;

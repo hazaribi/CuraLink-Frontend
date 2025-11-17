@@ -129,38 +129,10 @@ export default function ResearcherDashboard() {
     const userSpecialties = profile.specialties.map(s => s.toLowerCase());
     const collabSpecialty = collaborator.specialty.toLowerCase();
     
-    // Enhanced matching for movement disorders and neurology
-    if (userSpecialties.some(spec => spec.includes('movement disorders'))) {
-      if (collabSpecialty.includes('pediatric neurology') || collabSpecialty.includes('neurology')) {
-        score += 90; // Very high match for neurology fields
-      } else if (collabSpecialty.includes('movement disorders')) {
-        score += 95; // Perfect match
-      }
-    } else if (userSpecialties.some(spec => spec.includes('neurology'))) {
-      if (collabSpecialty.includes('neurology') || collabSpecialty.includes('movement disorders')) {
-        score += 85; // High match for related neurology
-      }
-    } else if (userSpecialties.some(spec => spec.includes('proteomics') || spec.includes('glioma') || spec.includes('cancer'))) {
-      // Enhanced matching for proteomics and glioma researchers
-      if (collabSpecialty.includes('proteomics') || collabSpecialty.includes('cancer research') || collabSpecialty.includes('pathology')) {
-        score += 95; // Very high match for proteomics/cancer fields
-      } else if (collabSpecialty.includes('chemical biology') || collabSpecialty.includes('oncology')) {
-        score += 85; // High match for related fields
-      }
-    } else if (userSpecialties.some(spec => spec.includes('adhd') || spec.includes('attention'))) {
-      // Enhanced matching for ADHD researchers
-      if (collabSpecialty.includes('neuroimaging') || collabSpecialty.includes('developmental') || collabSpecialty.includes('child')) {
-        score += 95; // Very high match for ADHD-related fields
-      } else if (collabSpecialty.includes('psychiatry') || collabSpecialty.includes('psychology')) {
-        score += 85; // High match for mental health fields
-      }
-    } else if (userSpecialties.some(spec => spec.includes('depression') || spec.includes('depressive'))) {
-      // Enhanced matching for depression researchers
-      if (collabSpecialty.includes('neuroimaging') || collabSpecialty.includes('psychiatry') || collabSpecialty.includes('psychology')) {
-        score += 95; // Very high match for depression-related fields
-      } else if (collabSpecialty.includes('neurology') || collabSpecialty.includes('cognitive')) {
-        score += 85; // High match for related mental health fields
-      }
+    // High match for Movement Disorders + Pediatric Neurology
+    if (userSpecialties.some(spec => spec.includes('movement disorders')) && 
+        collabSpecialty.includes('pediatric neurology')) {
+      score += 85; // Very high match
     } else if (userSpecialties.some(spec => collabSpecialty.includes(spec) || spec.includes(collabSpecialty))) {
       score += 40;
     }
@@ -169,37 +141,19 @@ export default function ResearcherDashboard() {
     const userInterests = profile.researchInterests.map((i: string) => i.toLowerCase());
     const collabInterests = collaborator.researchInterests?.map((i: string) => i.toLowerCase()) || [];
     const commonInterests = userInterests.filter((ui: string) => 
-      collabInterests.some((ci: string) => ci.includes(ui) || ui.includes(ci)) ||
-      // Enhanced matching for Parkinson's and movement disorders
-      (ui.includes('parkinson') && ci.includes('movement')) ||
-      (ui.includes('movement') && ci.includes('parkinson')) ||
-      (ui.includes('neurology') && ci.includes('pediatric')) ||
-      // Enhanced matching for proteomics and glioma
-      (ui.includes('proteomics') && ci.includes('glioma')) ||
-      (ui.includes('glioma') && ci.includes('proteomics')) ||
-      (ui.includes('recurrent') && ci.includes('glioma')) ||
-      (ui.includes('biomarker') && ci.includes('discovery'))
+      collabInterests.some((ci: string) => ci.includes(ui) || ui.includes(ci))
     ).length;
     score += Math.min(commonInterests * 12, 35);
     
-    // Location bonus for Toronto (20% weight)
-    const userLocation = profile.location?.toLowerCase() || '';
-    const collabLocation = collaborator.institution?.toLowerCase() || '';
-    if (userLocation.includes('toronto') && collabLocation.includes('toronto')) {
-      score += 20;
-    } else if (userLocation.includes('toronto') && (collabLocation.includes('hospital for sick children') || collabLocation.includes('children\'s hospital'))) {
-      score += 25; // Extra bonus for Toronto children's hospitals
-    }
-    
-    // Institution prestige (10% weight)
-    const prestigeInstitutions = ['stanford', 'harvard', 'mit', 'mayo', 'johns hopkins', 'hospital for sick children', 'children\'s hospital', 'toronto western', 'university health network'];
+    // Institution prestige (15% weight) - Add Toronto hospitals
+    const prestigeInstitutions = ['stanford', 'harvard', 'mit', 'mayo', 'johns hopkins', 'hospital for sick children', 'children\'s hospital'];
     if (prestigeInstitutions.some(inst => collaborator.institution.toLowerCase().includes(inst))) {
-      score += 10;
+      score += 15;
     }
     
-    // Publication count (5% weight)
-    if (collaborator.publications > 50) score += 5;
-    else if (collaborator.publications > 20) score += 3;
+    // Publication count (10% weight)
+    if (collaborator.publications > 50) score += 10;
+    else if (collaborator.publications > 20) score += 5;
     
     return Math.min(score, 100);
   };
@@ -208,65 +162,7 @@ export default function ResearcherDashboard() {
     setLoadingCollaborators(true);
     try {
       const { apiService } = await import('../../../lib/api');
-      // Enhanced search for different researcher types
-      let searchQuery = collaboratorSearch;
-      if (!searchQuery && profile?.specialties) {
-        if (profile.specialties.some(s => s.toLowerCase().includes('movement disorders'))) {
-          searchQuery = 'movement disorders neurology';
-        } else if (profile.specialties.some(s => s.toLowerCase().includes('proteomics') || s.toLowerCase().includes('glioma'))) {
-          searchQuery = 'proteomics glioma cancer research';
-        } else if (profile.specialties.some(s => s.toLowerCase().includes('depression') || s.toLowerCase().includes('depressive'))) {
-          // Return specific depression collaborators
-          const depressionCollaborators = [
-            {
-              id: 'dep1',
-              name: 'Dr. Guido van Wingen',
-              specialty: 'Neuroimaging',
-              institution: 'Amsterdam UMC',
-              publications: 85,
-              researchInterests: ['Neuroimaging', 'Depression', 'Brain Networks'],
-              collaborationStatus: 'open',
-              matchScore: 95
-            },
-            {
-              id: 'dep2', 
-              name: 'Prof. Claudi Bockting',
-              specialty: 'Depression Treatment',
-              institution: 'University of Amsterdam',
-              publications: 120,
-              researchInterests: ['Depression Treatment', 'Cognitive Therapy', 'Relapse Prevention'],
-              collaborationStatus: 'open',
-              matchScore: 92
-            },
-            {
-              id: 'dep3',
-              name: 'Dr. Nic van der Wee', 
-              specialty: 'Psychiatry',
-              institution: 'Leiden University Medical Center',
-              publications: 95,
-              researchInterests: ['Depression', 'Neuroimaging', 'Anxiety Disorders'],
-              collaborationStatus: 'selective',
-              matchScore: 90
-            },
-            {
-              id: 'dep4',
-              name: 'Prof. Damiaan Denys',
-              specialty: 'Neurology', 
-              institution: 'Amsterdam UMC',
-              publications: 110,
-              researchInterests: ['Depression', 'Deep Brain Stimulation', 'Treatment-Resistant Depression'],
-              collaborationStatus: 'selective',
-              matchScore: 88
-            }
-          ];
-          setRealCollaborators(depressionCollaborators);
-          setLoadingCollaborators(false);
-          return;
-        } else {
-          searchQuery = profile.specialties[0] || '';
-        }
-      }
-      const response = await apiService.getCollaborators(selectedSpecialtyFilter, searchQuery, profile?.location);
+      const response = await apiService.getCollaborators(selectedSpecialtyFilter, collaboratorSearch, profile?.location);
       const apiCollaborators = (response as any).collaborators || [];
       
       // Use API data directly (already filtered)
@@ -283,18 +179,7 @@ export default function ResearcherDashboard() {
       console.warn('Collaborators API unavailable, using fallback data');
       // Force API mock data directly
       const { apiService } = await import('../../../lib/api');
-      // Enhanced fallback search
-      let searchQuery = collaboratorSearch;
-      if (!searchQuery && profile?.specialties) {
-        if (profile.specialties.some(s => s.toLowerCase().includes('movement disorders'))) {
-          searchQuery = 'movement disorders neurology';
-        } else if (profile.specialties.some(s => s.toLowerCase().includes('proteomics') || s.toLowerCase().includes('glioma'))) {
-          searchQuery = 'proteomics glioma cancer research';
-        } else {
-          searchQuery = profile.specialties[0] || '';
-        }
-      }
-      const fallbackData = (apiService as any).getMockCollaborators?.(selectedSpecialtyFilter, searchQuery, profile?.location) || [];
+      const fallbackData = (apiService as any).getMockCollaborators?.(selectedSpecialtyFilter, collaboratorSearch, profile?.location) || [];
       const filtered = fallbackData.map((collab: Collaborator) => ({
         ...collab,
         matchScore: calculateCollaboratorMatch(collab)
@@ -325,22 +210,8 @@ export default function ResearcherDashboard() {
   const loadPublications = async () => {
     try {
       const { apiService } = await import('../../../lib/api');
-      // Enhanced search query for different researcher types
-      let searchQuery = '';
-      if (publicationSearch && profile) {
-        searchQuery = `${profile.specialties[0]} ${publicationSearch}`;
-      } else if (profile?.specialties.some(s => s.toLowerCase().includes('movement disorders'))) {
-        searchQuery = 'Parkinson\'s disease movement disorders';
-      } else if (profile?.specialties.some(s => s.toLowerCase().includes('proteomics') || s.toLowerCase().includes('glioma'))) {
-        searchQuery = 'radiotherapy recurrent glioma';
-      } else if (profile?.specialties.some(s => s.toLowerCase().includes('adhd') || s.toLowerCase().includes('attention'))) {
-        searchQuery = 'dopamine modulation ADHD';
-      } else if (profile?.specialties.some(s => s.toLowerCase().includes('depression') || s.toLowerCase().includes('depressive'))) {
-        searchQuery = 'long-term outcomes depression treatment';
-      } else {
-        searchQuery = profile?.specialties[0] || '';
-      }
-      
+      const searchQuery = publicationSearch && profile ? 
+        `${profile.specialties[0]} ${publicationSearch}` : (profile?.specialties[0] || '');
       const response = await apiService.getPublications(searchQuery);
       // Use API data directly (already filtered) + ORCID
       const filtered = [...(response.publications || []), ...orcidPublications];
@@ -348,21 +219,9 @@ export default function ResearcherDashboard() {
       setFilteredPublications(filtered);
     } catch (error) {
       console.warn('Publications API failed, using mock data');
-      // Force API mock data directly with enhanced search
+      // Force API mock data directly
       const { apiService } = await import('../../../lib/api');
-      let searchQuery = publicationSearch;
-      if (!searchQuery && profile?.specialties) {
-        if (profile.specialties.some(s => s.toLowerCase().includes('movement disorders'))) {
-          searchQuery = 'Parkinson\'s disease movement disorders';
-        } else if (profile.specialties.some(s => s.toLowerCase().includes('proteomics') || s.toLowerCase().includes('glioma'))) {
-          searchQuery = 'radiotherapy recurrent glioma';
-        } else if (profile.specialties.some(s => s.toLowerCase().includes('adhd') || s.toLowerCase().includes('attention'))) {
-          searchQuery = 'dopamine modulation ADHD';
-        } else if (profile.specialties.some(s => s.toLowerCase().includes('depression') || s.toLowerCase().includes('depressive'))) {
-          searchQuery = 'long-term outcomes depression treatment';
-        }
-      }
-      const fallbackPubs = (apiService as any).getMockPublications?.(searchQuery) || [];
+      const fallbackPubs = (apiService as any).getMockPublications?.(publicationSearch) || [];
       setFilteredPublications([...orcidPublications, ...fallbackPubs]);
     }
   };
@@ -709,20 +568,7 @@ export default function ResearcherDashboard() {
                   </div>
                   <div className="space-y-4">
                     {profile.specialties.slice(0, 2).map((specialty, index) => {
-                      // Enhanced content for movement disorders and related fields
-                      const fieldPublications = specialty.toLowerCase().includes('movement disorders') ? [
-                        { title: 'Deep Brain Stimulation Advances in Movement Disorders', journal: 'Nature Medicine', date: '2024-01-20', isNew: true },
-                        { title: 'Parkinson\'s Disease Treatment Guidelines Update', journal: 'NEJM', date: '2024-01-18', isNew: true }
-                      ] : specialty.toLowerCase().includes('neurology') ? [
-                        { title: 'Pediatric Neurology Research Breakthrough', journal: 'Nature Medicine', date: '2024-01-20', isNew: true },
-                        { title: 'Movement Disorders in Children: New Insights', journal: 'NEJM', date: '2024-01-18', isNew: true }
-                      ] : specialty.toLowerCase().includes('adhd') || specialty.toLowerCase().includes('attention') ? [
-                        { title: 'Neuroimaging Advances in ADHD Research Netherlands', journal: 'Nature Medicine', date: '2024-01-20', isNew: true },
-                        { title: 'ADHD Dopamine Modulation: New Insights', journal: 'NEJM', date: '2024-01-18', isNew: true }
-                      ] : specialty.toLowerCase().includes('depression') || specialty.toLowerCase().includes('depressive') ? [
-                        { title: 'Neuroimaging Advances in Depression Research Netherlands', journal: 'Nature Medicine', date: '2024-01-20', isNew: true },
-                        { title: 'Long-term Depression Treatment Outcomes', journal: 'NEJM', date: '2024-01-18', isNew: true }
-                      ] : [
+                      const fieldPublications = [
                         { title: `Latest ${specialty} Research Breakthrough`, journal: 'Nature Medicine', date: '2024-01-20', isNew: true },
                         { title: `${specialty} Clinical Guidelines Update`, journal: 'NEJM', date: '2024-01-18', isNew: true }
                       ];
@@ -747,20 +593,7 @@ export default function ResearcherDashboard() {
                   </div>
                   <div className="space-y-4">
                     {profile.specialties.slice(0, 2).map((specialty, index) => {
-                      // Enhanced trials for movement disorders and related fields
-                      const fieldTrials = specialty.toLowerCase().includes('movement disorders') ? [
-                        { title: 'Freezing of Gait in Parkinson\'s Disease: Intervention Study', phase: 'Phase II', status: 'Recruiting', date: '2024-01-19', isNew: true },
-                        { title: 'Deep Brain Stimulation for Movement Disorders', phase: 'Phase III', status: 'Starting Soon', date: '2024-01-17', isNew: true }
-                      ] : specialty.toLowerCase().includes('neurology') ? [
-                        { title: 'Pediatric Movement Disorders Treatment Study', phase: 'Phase II', status: 'Recruiting', date: '2024-01-19', isNew: true },
-                        { title: 'Epilepsy Surgery in Children: Multi-center Trial', phase: 'Phase III', status: 'Starting Soon', date: '2024-01-17', isNew: true }
-                      ] : specialty.toLowerCase().includes('adhd') || specialty.toLowerCase().includes('attention') ? [
-                        { title: 'ADHD Dopamine Modulation Amsterdam Study', phase: 'Phase II', status: 'Recruiting', date: '2024-01-19', isNew: true },
-                        { title: 'Neuroimaging in ADHD: Netherlands Trial', phase: 'Phase III', status: 'Starting Soon', date: '2024-01-17', isNew: true }
-                      ] : specialty.toLowerCase().includes('depression') || specialty.toLowerCase().includes('depressive') ? [
-                        { title: 'Psilocybin Depression Amsterdam Study', phase: 'Phase II', status: 'Recruiting', date: '2024-01-19', isNew: true },
-                        { title: 'Long-term Depression Treatment Netherlands', phase: 'Phase III', status: 'Starting Soon', date: '2024-01-17', isNew: true }
-                      ] : [
+                      const fieldTrials = [
                         { title: `${specialty} Phase III Multi-center Study`, phase: 'Phase III', status: 'Recruiting', date: '2024-01-19', isNew: true },
                         { title: `Novel ${specialty} Treatment Protocol`, phase: 'Phase II', status: 'Starting Soon', date: '2024-01-17', isNew: true }
                       ];

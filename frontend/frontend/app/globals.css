@@ -1,0 +1,129 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+  
+  /* Brand Colors */
+  --primary: #6366f1; /* indigo-500 */
+  --primary-dark: #4f46e5; /* indigo-600 */
+  --secondary: #06b6d4; /* cyan-500 */
+  --accent: #8b5cf6; /* purple-500 */
+  
+  /* Status Colors */
+  --success: #10b981; /* emerald-500 */
+  --warning: #f59e0b; /* amber-500 */
+  --error: #ef4444; /* red-500 */
+  --info: #3b82f6; /* blue-500 */
+  
+  /* Neutral Colors */
+  --gray-50: #f9fafb;
+  --gray-100: #f3f4f6;
+  --gray-200: #e5e7eb;
+  --gray-300: #d1d5db;
+  --gray-600: #4b5563;
+  --gray-700: #374151;
+  --gray-800: #1f2937;
+  --gray-900: #111827;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  line-height: 1.6;
+  font-size: 14px;
+}
+
+/* Typography Scale - Enhanced Readability */
+.text-xs { font-size: 0.75rem; line-height: 1.2rem; font-weight: 500; }
+.text-sm { font-size: 0.875rem; line-height: 1.4rem; font-weight: 500; }
+.text-base { font-size: 1rem; line-height: 1.6rem; font-weight: 500; }
+.text-lg { font-size: 1.125rem; line-height: 1.8rem; font-weight: 600; }
+.text-xl { font-size: 1.25rem; line-height: 1.9rem; font-weight: 600; }
+.text-2xl { font-size: 1.5rem; line-height: 2.1rem; font-weight: 700; }
+.text-3xl { font-size: 1.875rem; line-height: 2.4rem; font-weight: 700; }
+
+/* High Contrast Text Colors */
+.text-primary { color: #1f2937; } /* gray-800 */
+.text-secondary { color: #374151; } /* gray-700 */
+.text-muted { color: #6b7280; } /* gray-500 */
+.text-link { color: #2563eb; text-decoration: underline; }
+.text-link:hover { color: #1d4ed8; }
+
+/* Consistent Spacing */
+.spacing-xs { padding: 0.5rem; }
+.spacing-sm { padding: 1rem; }
+.spacing-md { padding: 1.5rem; }
+.spacing-lg { padding: 2rem; }
+
+/* Consistent Shadows */
+.shadow-card { box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06); }
+.shadow-elevated { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
+
+/* Focus States for Accessibility */
+.focus-ring:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Button States */
+.btn-primary {
+  background: linear-gradient(to right, #6366f1, #06b6d4);
+  color: white;
+  font-weight: 600;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.75rem;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+.btn-primary:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Performance optimizations */
+* {
+  box-sizing: border-box;
+}
+
+/* Prevent layout shifts */
+img, video {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
